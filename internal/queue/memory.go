@@ -7,29 +7,29 @@ import (
 )
 
 type MemoryQueue struct {
-	jobsChan chan *job.Job
-	jobsMap  map[string]*job.Job
-	mutex    sync.RWMutex
+	JobsChan chan *job.Job
+	JobsMap  map[string]*job.Job
+	Mutex    sync.RWMutex
 }
 
 func NewMemoryQueue(bufferSize int) *MemoryQueue {
 	return &MemoryQueue{
-		jobsChan: make(chan *job.Job, bufferSize),
-		jobsMap:  make(map[string]*job.Job),
+		JobsChan: make(chan *job.Job, bufferSize),
+		JobsMap:  make(map[string]*job.Job),
 	}
 }
 
 func (q *MemoryQueue) Enqueue(j *job.Job) error {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
+	q.Mutex.Lock()
+	defer q.Mutex.Unlock()
 
-	q.jobsMap[j.ID.String()] = j
-	q.jobsChan <- j
+	q.JobsMap[j.ID.String()] = j
+	q.JobsChan <- j
 	return nil
 }
 
 func (q *MemoryQueue) Dequeue() (*job.Job, error) {
-	j, ok := <-q.jobsChan
+	j, ok := <-q.JobsChan
 	if !ok {
 		return nil, errors.New("queue closed")
 	}
@@ -37,22 +37,22 @@ func (q *MemoryQueue) Dequeue() (*job.Job, error) {
 }
 
 func (q *MemoryQueue) Update(j *job.Job) error {
-	q.mutex.Lock()
-	defer q.mutex.Unlock()
+	q.Mutex.Lock()
+	defer q.Mutex.Unlock()
 
-	if _, exists := q.jobsMap[j.ID.String()]; !exists {
+	if _, exists := q.JobsMap[j.ID.String()]; !exists {
 		return errors.New("job not found")
 	}
 
-	q.jobsMap[j.ID.String()] = j
+	q.JobsMap[j.ID.String()] = j
 	return nil
 }
 
 func (q *MemoryQueue) GetByID(id string) (*job.Job, error) {
-	q.mutex.RLock()
-	defer q.mutex.RUnlock()
+	q.Mutex.RLock()
+	defer q.Mutex.RUnlock()
 
-	if j, exists := q.jobsMap[id]; exists {
+	if j, exists := q.JobsMap[id]; exists {
 		return j, nil
 	}
 
